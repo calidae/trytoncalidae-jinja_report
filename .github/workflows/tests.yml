@@ -1,0 +1,67 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  test-postgresql:
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: github_actions
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+  
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Tox and any other packages
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
+        pip install tox
+    - name: Run tox
+      env:
+        TRYTOND_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/github_actions
+      run: |
+        tox -e py${{ matrix.python-version }}-postgresql
+
+  lint:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.10'
+    - name: Install Tox and any other packages
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
+        pip install tox
+    - name: Run tox
+      run: |
+        tox -e linters
