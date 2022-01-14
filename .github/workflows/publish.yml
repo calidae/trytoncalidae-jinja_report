@@ -1,0 +1,23 @@
+name: Publish on PyPI
+
+on:
+  push:
+    tags: '*'
+
+jobs:
+
+  pypi-publishing:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install twine and wheel
+      run: |
+        python3 -m pip install --upgrade pip twine wheel
+    - name: Prepare dist file
+      run: python3 setup.py bdist_wheel
+    - name: Publish dist on PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      run: python3 -m twine upload --non-interactive dist/*
