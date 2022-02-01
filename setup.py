@@ -64,6 +64,7 @@ setup(
     version=version,
     description='Create Tryton reports based on jinja2 python library',
     long_description=read('README.md'),
+    long_description_content_type='text/markdown',
     author='Calidae',
     author_email='dev@calidae.com',
     url='https://github.com/calidae/',
