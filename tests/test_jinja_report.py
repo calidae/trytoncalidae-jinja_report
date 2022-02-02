@@ -1,4 +1,6 @@
+
 import unittest
+import trytond_factories
 
 from trytond.pool import Pool
 import trytond.tests.test_tryton
@@ -23,39 +25,65 @@ class JinjaReportTestCase(ModuleTestCase):
 
     @with_transaction()
     def test_jinja_report(self):
-
-        # TODO: Generate those records with factories when
-        # trytond_factories contain those factories
-        pool = Pool()
-        ActionReport = pool.get('ir.action.report')
-        Model = pool.get('test.model')
-
-        action_report, = ActionReport.create([{
-            'name': 'Test Report',
-            'report': 'jinja_report/tests/report_template.html',
-            'report_name': 'jinja.test_report',
-            'model': 'test.model',
-            'extension': 'pdf',
-            'template_extension': 'html',
-        }])
-
         # GIVEN
-        records = Model.create([
-            {'name': 'First rec'},
-            {'name': 'Second rec'},
-        ])
-        Report = pool.get('jinja.test_report', type='report')
-        report_context = Report.get_context(
-            records, None, {'some_data': 'Some data'}
+        report = trytond_factories.Report.create(
+            model='test.model',
+            report_name='jinja.test_report',
+            extension='html',
+            template_extension='html',
+            report_content_custom=(
+                b"{{ record.name }} {{ data.get('data') }}"
+            ),
         )
 
+        record = trytond_factories.TestModel.create(name='R3C0RD')
+
         # WHEN
-        result = Report.render(action_report, report_context)
+        Report = Pool().get(report.report_name, type='report')
+        (_, report_data, _, _) = Report.execute(
+            [record.id], data={'data': 'D4T4'}
+        )
+
+        # THEN
+        self.assertEqual(report_data, 'R3C0RD D4T4')
+
+    @with_transaction()
+    def test_jinja_report_attachment(self):
+        # GIVEN
+        record = trytond_factories.TestModel.create()
+        trytond_factories.DataAttachment.create(
+            resource=record,
+            name='example.png',
+            data=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x02\x00'
+            b'\x00\x00\x02\x08\x02\x00\x00\x00\xfd\xd4\x9as\x00\x00\x00\x01'
+            b'sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\x04gAMA\x00\x00\xb1\x8f'
+            b'\x0b\xfca\x05\x00\x00\x00\tpHYs\x00\x00\x0e\xc3\x00\x00\x0e\xc3'
+            b'\x01\xc7o\xa8d\x00\x00\x00\x15IDAT\x18Wcxgd\xf5VN\x8d\x01\x88'
+            b'\xdf\xdb\xb9\x02\x00&\xc4\x05/C\xee\xb8\xc6\x00\x00\x00\x00'
+            b'IEND\xaeB`\x82',
+        )
+        report = trytond_factories.Report.create(
+            model='test.model',
+            report_name='jinja.test_report',
+            extension='html',
+            template_extension='html',
+            report_content_custom=(
+                b"{{ attachments(record, 'example.png') | b64encode }}"
+            ),
+        )
+        Report = Pool().get(report.report_name, type='report')
+
+        # WHEN
+        (_, report_data, _, _) = Report.execute(ids=[record.id], data={})
 
         # THEN
         self.assertEqual(
-            result,
-            '<html><body>\n First rec Second rec\nSome data\n</body></html>'
+            report_data,
+            (
+                "b'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAAXNSR0IArs"
+                "4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAVSU"
+                "RBVBhXY3hnZPVWTo0BiN/buQIAJsQFL0PuuMYAAAAASUVORK5CYII='"
+            )
         )
 
 

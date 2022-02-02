@@ -4,7 +4,9 @@ __all__ = [
     'SetTranslationJinja2',
 ]
 
+from base64 import b64encode
 import jinja2
+
 from trytond.pool import Pool, PoolMeta
 from trytond.report.report import TranslateFactory
 
@@ -37,7 +39,14 @@ class Jinja2Report(metaclass=PoolMeta):
         env = jinja2.Environment(extensions=cls.JINJA_EXTENSIONS)
         translations = cls.get_translations()
         env.install_gettext_translations(translations)
+        env.filters['b64encode'] = b64encode
         return env
+
+    @classmethod
+    def get_context(cls, records, header, data):
+        report_context = super().get_context(records, header, data)
+        report_context['attachments'] = cls.get_attachment
+        return report_context
 
     @classmethod
     def get_translations(cls):
@@ -46,6 +55,20 @@ class Jinja2Report(metaclass=PoolMeta):
             Pool().get('ir.translation'),
         )
         return JinjaTranslator(lambda text: translate(text))
+
+    @classmethod
+    def get_attachment(cls, record, name):
+        Attachment = Pool().get('ir.attachment')
+        try:
+            attachment, = Attachment.search([
+                ('resource', '=', record),
+                ('name', '=', name),
+            ])
+            data = attachment.data
+        except ValueError:
+            data = None
+        finally:
+            return data
 
 
 class SetTranslationJinja2(metaclass=PoolMeta):
