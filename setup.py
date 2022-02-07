@@ -53,7 +53,12 @@ for dep in info.get('depends', []):
         requires.append(get_require_version('%s_%s' % (prefix, dep)))
 requires.append(get_require_version('trytond'))
 
-tests_require = []
+extras_require = {
+    'dev': [
+        get_require_version('trytond-factories'),
+    ],
+}
+
 dependency_links = []
 if minor_version % 2:
     # Add development index for testing with proteus
@@ -80,7 +85,6 @@ setup(
             info.get('xml', [])
             + [
                 'tryton.cfg',
-                'tests/report_template.html',
             ]
         ),
     },
@@ -112,5 +116,5 @@ setup(
     """ % (MODULE, MODULE),
     test_suite='tests',
     test_loader='trytond.test_loader:Loader',
-    tests_require=tests_require,
+    extras_require=extras_require,
 )
