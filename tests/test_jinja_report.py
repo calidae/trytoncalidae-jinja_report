@@ -68,7 +68,8 @@ class JinjaReportTestCase(ModuleTestCase):
             extension='html',
             template_extension='html',
             report_content_custom=(
-                b"{{ attachments(record, 'example.png') | b64encode }}"
+                b"{{ attachments(record, 'example.png') "
+                b"| b64encode | decode }}"
             ),
         )
         Report = Pool().get(report.report_name, type='report')
@@ -80,9 +81,9 @@ class JinjaReportTestCase(ModuleTestCase):
         self.assertEqual(
             report_data,
             (
-                "b'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAAXNSR0IArs"
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAAXNSR0IArs"
                 "4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAVSU"
-                "RBVBhXY3hnZPVWTo0BiN/buQIAJsQFL0PuuMYAAAAASUVORK5CYII='"
+                "RBVBhXY3hnZPVWTo0BiN/buQIAJsQFL0PuuMYAAAAASUVORK5CYII="
             )
         )
 
