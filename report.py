@@ -40,6 +40,7 @@ class Jinja2Report(metaclass=PoolMeta):
         translations = cls.get_translations()
         env.install_gettext_translations(translations)
         env.filters['b64encode'] = b64encode
+        env.filters['decode'] = bytes.decode
         return env
 
     @classmethod
