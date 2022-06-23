@@ -1,9 +1,7 @@
 
-import unittest
 import trytond_factories
 
 from trytond.pool import Pool
-import trytond.tests.test_tryton
 from trytond.tests.test_tryton import activate_module
 from trytond.tests.test_tryton import ModuleTestCase
 from trytond.tests.test_tryton import with_transaction
@@ -88,11 +86,4 @@ class JinjaReportTestCase(ModuleTestCase):
         )
 
 
-def suite():
-    suite = trytond.tests.test_tryton.suite()
-    suite.addTests(
-        unittest.TestLoader().loadTestsFromTestCase(
-            JinjaReportTestCase
-        )
-    )
-    return suite
+del ModuleTestCase
