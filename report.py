@@ -11,6 +11,18 @@ from trytond.pool import Pool, PoolMeta
 from trytond.report.report import TranslateFactory
 
 
+class JinjaExtensionsMixin():
+    JINJA_EXTENSIONS = [
+        'jinja2.ext.i18n',
+        'jinja2.ext.do',
+        'jinja2.ext.loopcontrols',
+    ]
+
+    @classmethod
+    def get_extensions(cls):
+        return cls.JINJA_EXTENSIONS
+
+
 class JinjaTranslator(object):
 
     def __init__(self, method):
@@ -20,13 +32,7 @@ class JinjaTranslator(object):
         self.ungettext = method
 
 
-class Jinja2Report(metaclass=PoolMeta):
-
-    JINJA_EXTENSIONS = [
-        'jinja2.ext.i18n',
-        'jinja2.ext.do',
-        'jinja2.ext.loopcontrols',
-    ]
+class Jinja2Report(JinjaExtensionsMixin, metaclass=PoolMeta):
 
     @classmethod
     def render(cls, action, context):
@@ -36,7 +42,7 @@ class Jinja2Report(metaclass=PoolMeta):
 
     @classmethod
     def get_environ(cls):
-        env = jinja2.Environment(extensions=cls.JINJA_EXTENSIONS)
+        env = jinja2.Environment(extensions=cls.get_extensions())
         translations = cls.get_translations()
         env.install_gettext_translations(translations)
         env.filters['b64encode'] = b64encode
@@ -72,7 +78,7 @@ class Jinja2Report(metaclass=PoolMeta):
             return data
 
 
-class SetTranslationJinja2(metaclass=PoolMeta):
+class SetTranslationJinja2(JinjaExtensionsMixin, metaclass=PoolMeta):
 
     __name__ = 'ir.translation.set'
 
@@ -84,7 +90,7 @@ class SetTranslationJinja2(metaclass=PoolMeta):
             # content with the picky genshi translation extractor,
             # the set-translations process will fail in presence of
             # reports tailored for other template languages like jinja2.
-            env = jinja2.Environment(extensions=['jinja2.ext.i18n'])
+            env = jinja2.Environment(extensions=self.get_extensions())
             for _, _, str_ in env.extract_translations(content.decode()):
                 if str_:
                     yield str_
