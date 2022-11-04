@@ -10,14 +10,21 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Install twine and wheel
-      run: |
-        python3 -m pip install --upgrade pip twine wheel
-    - name: Prepare dist file
-      run: python3 setup.py bdist_wheel
-    - name: Publish dist on PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-      run: python3 -m twine upload --non-interactive dist/*
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install PyPA build
+      run: python3 -m pip install build
+
+    - name: Prepare distribuition
+      run: python3 -m build
+
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.TWINE_PASSWORD }}
