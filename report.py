@@ -52,7 +52,8 @@ class Jinja2Report(JinjaExtensionsMixin, metaclass=PoolMeta):
     @classmethod
     def get_context(cls, records, header, data):
         report_context = super().get_context(records, header, data)
-        report_context['attachments'] = cls.get_attachment
+        report_context['attachment'] = cls.get_attachment
+        report_context['attachments'] = cls.get_attachments
         return report_context
 
     @classmethod
@@ -74,6 +75,20 @@ class Jinja2Report(JinjaExtensionsMixin, metaclass=PoolMeta):
             data = attachment.data
         except ValueError:
             data = None
+        finally:
+            return data
+
+    @classmethod
+    def get_attachments(cls, record, name):
+        Attachment = Pool().get('ir.attachment')
+        try:
+            attachments = Attachment.search([
+                ('resource', '=', record),
+                ('name', 'ilike', f"{name}%"),
+            ])
+            data = [attachment.data for attachment in attachments]
+        except ValueError:
+            data = []
         finally:
             return data
 

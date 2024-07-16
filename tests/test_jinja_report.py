@@ -66,7 +66,7 @@ class JinjaReportTestCase(ModuleTestCase):
             extension='html',
             template_extension='html',
             report_content_custom=(
-                b"{{ attachments(record, 'example.png') "
+                b"{{ attachment(record, 'example.png') "
                 b"| b64encode | decode }}"
             ),
         )
@@ -79,6 +79,63 @@ class JinjaReportTestCase(ModuleTestCase):
         self.assertEqual(
             report_data,
             (
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAAXNSR0IArs"
+                "4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAVSU"
+                "RBVBhXY3hnZPVWTo0BiN/buQIAJsQFL0PuuMYAAAAASUVORK5CYII="
+            )
+        )
+
+    @with_transaction()
+    def test_jinja_report_attachments(self):
+        # GIVEN
+        record = trytond_factories.TestModel.create()
+        trytond_factories.DataAttachment.create(
+            resource=record,
+            name='image example.png',
+            data=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x02\x00'
+            b'\x00\x00\x02\x08\x02\x00\x00\x00\xfd\xd4\x9as\x00\x00\x00\x01'
+            b'sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\x04gAMA\x00\x00\xb1\x8f'
+            b'\x0b\xfca\x05\x00\x00\x00\tpHYs\x00\x00\x0e\xc3\x00\x00\x0e\xc3'
+            b'\x01\xc7o\xa8d\x00\x00\x00\x15IDAT\x18Wcxgd\xf5VN\x8d\x01\x88'
+            b'\xdf\xdb\xb9\x02\x00&\xc4\x05/C\xee\xb8\xc6\x00\x00\x00\x00'
+            b'IEND\xaeB`\x82',
+        )
+        trytond_factories.DataAttachment.create(
+            resource=record,
+            name='image example2.png',
+            data=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x02\x00'
+            b'\x00\x00\x02\x08\x02\x00\x00\x00\xfd\xd4\x9as\x00\x00\x00\x01'
+            b'sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\x04gAMA\x00\x00\xb1\x8f'
+            b'\x0b\xfca\x05\x00\x00\x00\tpHYs\x00\x00\x0e\xc3\x00\x00\x0e\xc3'
+            b'\x01\xc7o\xa8d\x00\x00\x00\x15IDAT\x18Wcxgd\xf5VN\x8d\x01\x88'
+            b'\xdf\xdb\xb9\x02\x00&\xc4\x05/C\xee\xb8\xc6\x00\x00\x00\x00'
+            b'IEND\xaeB`\x82',
+        )
+        report = trytond_factories.Report.create(
+            model='test.model',
+            report_name='jinja.test_report',
+            extension='html',
+            template_extension='html',
+            report_content_custom=(
+                b"{% for attachment in attachments(record, 'image') %}"
+                b"{{ attachment | b64encode | decode }}"
+                b"{% endfor %}"
+            ),
+        )
+        Report = Pool().get(report.report_name, type='report')
+
+        # WHEN
+        (_, report_data, _, _) = Report.execute(ids=[record.id], data={})
+
+        # THEN
+        self.assertEqual(
+            report_data,
+            (
+                # first attachment
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAAXNSR0IArs"
+                "4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAVSU"
+                "RBVBhXY3hnZPVWTo0BiN/buQIAJsQFL0PuuMYAAAAASUVORK5CYII="
+                # second attachment
                 "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAAXNSR0IArs"
                 "4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAVSU"
                 "RBVBhXY3hnZPVWTo0BiN/buQIAJsQFL0PuuMYAAAAASUVORK5CYII="
